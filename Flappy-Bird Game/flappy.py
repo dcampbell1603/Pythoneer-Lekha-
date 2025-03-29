@@ -29,13 +29,16 @@ def welcome_main_screen():
     while True:
         for event in pygame.event.get():
             # if user clicks on cross button, close the game
-            if event.type == QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
-                pygame.quit()
-                sys.exit()
+            if event.type == QUIT:
+                graceful_exit()
 
             # If the user presses space or up key, start the game for them
-            elif event.type == KEYDOWN and (event.key == K_SPACE or event.key == K_UP):
-                return
+            elif event.type == KEYDOWN:
+                if event.key == K_ESCAPE:
+                    if confirm_quit(): # show the confirmation dialogue
+                        graceful_exit()
+                elif event.key in (K_SPACE, K_UP):
+                    return
             else:
                 display_screen_window.blit(game_image['background'], (0, 0))
                 display_screen_window.blit(game_image['player'], (p_x, p_y))
@@ -43,6 +46,25 @@ def welcome_main_screen():
                 display_screen_window.blit(game_image['base'], (b_x, play_ground))
                 pygame.display.update()
                 time_clock.tick(FPS)
+
+def confirm_quit():
+    "shows dialogue before quitting so no accidental quits anymore"
+    font = pygame.font.SysFont('Arial', 30)
+    text = font.render("Quit Game? (Y/N)", True, (255,255,255))
+    display_screen_window.blit(text, (50, scr_height//2))
+    pygame.display.update()
+
+    while True:
+        for event in pygame.event.get():
+            if event.type == QUIT:
+                return True
+            if event.type == KEYDOWN:
+                if event.key == K_y:
+                    return True
+                elif event.key == K_n:
+                    return False
+        time_clock.tick(FPS)
+
 
 
 def main_gameplay():
@@ -77,9 +99,11 @@ def main_gameplay():
 
     while True:
         for event in pygame.event.get():
-            if event.type == QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
-                pygame.quit()
-                sys.exit()
+            if event.type == QUIT:
+                graceful_exit()
+            elif event.type == KEYDOWN and event.key == K_ESCAPE:
+                if confirm_quit():
+                    graceful_exit()
             if event.type == KEYDOWN and (event.key == K_SPACE or event.key == K_UP):
                 if p_y > 0:
                     p_vx = p_flap_accuracy
@@ -175,6 +199,12 @@ def get_Random_Pipes():
         {'x': pipeX, 'y': yes2}  # lower Pipe
     ]
     return pipe
+def graceful_exit():
+    "more safely shuts down pygame"
+    pygame.mixer.quit()
+    pygame.quit()
+    sys.exit(0)
+
 
 
 if __name__ == "__main__":
