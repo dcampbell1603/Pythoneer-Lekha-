@@ -49,11 +49,29 @@ def welcome_main_screen():
                 time_clock.tick(FPS)
 
 def confirm_quit():
-    "shows dialogue before quitting so no accidental quits anymore"
-    font = pygame.font.SysFont('Arial', 30)
-    text = font.render("Quit Game? (Y/N)", True, (255,255,255))
-    display_screen_window.blit(text, (50, scr_height//2))
-    pygame.display.update()
+    #inializes new free type
+    if not pygame.freetype.get_init():
+        pygame.freetype.init()
+    
+    # create a semi-transpart overlay
+    overlay = pygame.Surface((scr_width, scr_height), pygame.SRCALPHA)
+    overlay.fill((0,0,0, 180)) # black but transparent, come back and play with levels see what feels right
+    display_screen_window.blit(overlay, (0,0))
+
+    # load font
+    try:
+        font = pygame.freetype.SysFont('Arial', 30)
+    except:
+        font = pygame.freetype.SysFont(None, 30) #falling back to default if it doenst work, remove later Dylan
+
+    # make some text actally come on screen, returns surface and rect
+    text_surface, text_rect = font.render(
+        "Quit Game? (Y/N)",
+        (255, 255, 255) # white, can be changed later also
+    )
+    text_rect.center = (scr_width//2, scr_height//2) # centers text
+    display_screen_window.blit(text_surface, text_rect) # overlays new display
+    pygame.display.update() 
 
     while True:
         for event in pygame.event.get():
