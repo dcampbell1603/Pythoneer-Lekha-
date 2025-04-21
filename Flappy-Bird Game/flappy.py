@@ -21,7 +21,11 @@ def welcome_main_screen():
     """
     Shows welcome images on the screen
     """
-
+    display_screen_window = pygame.display.set_mode((600, 499))
+    highscore = load_highscore()
+    font = pygame.font.SysFont('Arial', 18)
+    text_surface = font.render(f"Highscore: {highscore}", True, (255, 255, 255))
+    display_screen_window.blit(text_surface, (10, 10))
     p_x = int(scr_width / 5)
     p_y = int((scr_height - game_image['player'].get_height()) / 2)
     msgx = int((scr_width - game_image['message'].get_width()) / 2)
@@ -47,6 +51,39 @@ def welcome_main_screen():
                 display_screen_window.blit(game_image['base'], (b_x, play_ground))
                 pygame.display.update()
                 time_clock.tick(FPS)
+
+voice_jump = False
+HIGHSCORE_FILE = 'highscore.json'
+
+def voice_command_listener():
+    global voice_jump
+    recognizer = sr.Recognizer()
+    mic = sr.Microphone()
+    with mic as source:
+        recognizer.adjust_for_ambient_noise(source)
+    while True:
+        try:
+            with mic as source:
+                audio = recognizer.listen(source, phrase_time_limit=1)
+            text = recognizer.recognize_google(audio)
+            if 'jump' in text.lower():
+                voice_jump = True
+        except sr.UnknownValueError:
+            continue
+        except sr.RequestError:
+            break
+
+def load_highscore():
+    if os.path.exists(HIGHSCORE_FILE):
+        with open(HIGHSCORE_FILE, 'r') as file:
+            return json.load(file).get('highscore', 0)
+    return 0
+
+def save_highscore(score):
+    highscore = load_highscore()
+    if score > highscore:
+        with open(HIGHSCORE_FILE, 'w') as file:
+            json.dump({'highscore': score}, file)
 
 def confirm_quit():
     #inializes new free type
@@ -84,9 +121,26 @@ def confirm_quit():
                     return False
         time_clock.tick(FPS)
 
+def load_highscore():
+    if os.path.exists(HIGHSCORE_FILE):
+        with open(HIGHSCORE_FILE, 'r') as file:
+            return json.load(file).get('highscore', 0)
+    return 0
 
+def save_highscore(score):
+    highscore = load_highscore()
+    if score > highscore:
+        with open(HIGHSCORE_FILE, 'w') as file:
+            json.dump({'highscore': score}, file)
+
+def graceful_exit():
+    pygame.mixer.music.stop()
+    pygame.mixer.quit()
+    pygame.quit()
+    sys.exit(0)
 
 def main_gameplay():
+    global voice_jump
     score = 0
     p_x = int(scr_width / 5)
     p_y = int(scr_width / 2)
@@ -233,7 +287,7 @@ def main_gameplay():
             Xoffset += game_image['numbers'][digit].get_width()
         pygame.display.update()
         time_clock.tick(FPS)
-
+save_highscore(score)
 
 def is_Colliding(p_x, p_y, up_pipes, low_pipes):
     '''
@@ -324,6 +378,11 @@ if __name__ == "__main__":
                           )
 
     # Game sounds
+    pygame.mixer.music.load('sounds/bgm.mp3')
+    pygame.mixer.music.set_volume(0.5)
+    pygame.mixer.music.play(-1)
+
+    threading.Thread(target=voice_command_listener, daemon=True).start()
     game_audio_sound['die'] = pygame.mixer.Sound('sounds/die.wav')
     game_audio_sound['hit'] = pygame.mixer.Sound('sounds/hit.wav')
     game_audio_sound['point'] = pygame.mixer.Sound('sounds/point.wav')
