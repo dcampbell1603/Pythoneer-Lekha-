@@ -3,6 +3,17 @@ import sys  # We will use sys.exit to exit the program
 import pygame
 import pygame.freetype
 from pygame.locals import *  # Basic pygame imports
+import os
+import json
+import speech_recognition as sr
+import threading
+
+# Initialize Pygame and its mixer
+pygame.init()
+pygame.mixer.init()
+
+voice_jump = False
+HIGHSCORE_FILE = 'highscore.json'
 
 # Global Variables for the game
 FPS = 32
